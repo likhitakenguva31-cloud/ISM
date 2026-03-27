@@ -1,26 +1,29 @@
-import os
+import streamlit as st
 import pandas as pd
+from pathlib import Path
 
-# Load CSV files from the root directory and the data folder
+st.set_page_config(page_title="Income Dashboard", layout="wide")
+st.title("📊 Income Dashboard")
+st.write("Analyzing income patterns and trends")
 
-# Root directory CSV files
-root_csv_files = [f for f in os.listdir('.') if f.endswith('.csv') and os.path.isfile(f)]
+@st.cache_data
+def load_data():
+    dataframes = {}
+    for csv_file in Path(".").glob("*.csv"):
+        try:
+            df_name = csv_file.stem.replace("-", "_").replace(" ", "_")
+            dataframes[df_name] = pd.read_csv(csv_file)
+        except Exception as e:
+            st.error(f"❌ Error loading {csv_file.name}: {e}")
+    return dataframes
 
-# Data folder CSV files
-data_folder = 'data'
-data_csv_files = [f for f in os.listdir(data_folder) if f.endswith('.csv') and os.path.isfile(os.path.join(data_folder, f))]
+dataframes = load_data()
 
-# Function to load CSV files
-def load_csv_files(csv_file_list):
-    data_frames = []
-    for csv_file in csv_file_list:
-        df = pd.read_csv(csv_file)
-        data_frames.append(df)
-        # You can do additional processing here if needed
-    return data_frames
-
-# Load all CSV files from both locations
-all_csv_files = root_csv_files + [os.path.join(data_folder, f) for f in data_csv_files]
-data_frames = load_csv_files(all_csv_files)
-
-# Now you can use 'data_frames' as needed in your application.
+if dataframes:
+    selected = st.selectbox("Select dataset:", list(dataframes.keys()))
+    df = dataframes[selected]
+    st.metric("Rows", df.shape[0])
+    st.metric("Columns", df.shape[1])
+    st.dataframe(df.head(10), use_container_width=True)
+else:
+    st.write("No CSV files found")
