@@ -1,29 +1,32 @@
 import streamlit as st
 import pandas as pd
-from pathlib import Path
 
-st.set_page_config(page_title="Income Dashboard", layout="wide")
-st.title("📊 Income Dashboard")
-st.write("Analyzing income patterns and trends")
-
-@st.cache_data
+# Load data
+@st.cache
 def load_data():
-    dataframes = {}
-    for csv_file in Path(".").glob("*.csv"):
-        try:
-            df_name = csv_file.stem.replace("-", "_").replace(" ", "_")
-            dataframes[df_name] = pd.read_csv(csv_file)
-        except Exception as e:
-            st.error(f"❌ Error loading {csv_file.name}: {e}")
-    return dataframes
+    df = pd.read_csv('data/refugee_data.csv')  # Assuming a CSV file
+    return df
 
-dataframes = load_data()
+data = load_data()
 
-if dataframes:
-    selected = st.selectbox("Select dataset:", list(dataframes.keys()))
-    df = dataframes[selected]
-    st.metric("Rows", df.shape[0])
-    st.metric("Columns", df.shape[1])
-    st.dataframe(df.head(10), use_container_width=True)
-else:
-    st.write("No CSV files found")
+# App Title
+st.title('Refugee Mental Health Dashboard')
+
+# Overview Tab
+st.header('Overview')
+st.write('This dashboard provides insights into the mental health of refugees.')
+
+# Migration Trauma Factors Tab
+st.header('Migration Trauma Factors')
+trauma_factors = data['trauma_factors']  # Example column
+st.bar_chart(trauma_factors.value_counts())
+
+# Policy Impact Tab
+st.header('Policy Impact')
+policy_impact = data['policy_impact']  # Example column
+st.line_chart(policy_impact)
+
+# Interactive Elements
+if st.checkbox('Show Raw Data'):
+    st.subheader('Raw Data')
+    st.write(data)
